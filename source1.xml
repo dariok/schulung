@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<XML>
+  <element>
+    Freier Textinhalt ohne besondere Bedeutung
+  </element>
+  <element>
+    Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+    dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+    kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+    sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+    At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+    Lorem ipsum dolor sit amet.
+  </element>
+  <element>Lorem ipsum dolor sit amet, consetetur sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et
+    dolore magna aliquyam erat, sed diam voluptua. At vero eos et accusam et justo duo dolores et ea rebum. Stet clita
+    kasd gubergren, no sea takimata sanctus est Lorem ipsum dolor sit amet. Lorem ipsum dolor sit amet, consetetur
+    sadipscing elitr, sed diam nonumy eirmod tempor invidunt ut labore et dolore magna aliquyam erat, sed diam voluptua.
+    At vero eos et accusam et justo duo dolores et ea rebum. Stet clita kasd gubergren, no sea takimata sanctus est
+    Lorem ipsum dolor sit amet.</element>
+  <element>
+    <kindelement />
+  </element>
+  <element><kindelement /></element>
+</XML>
+<!-- einfaches XML-Beispiel:
+  - keine Namespaces definiert: alle Elemente sind also im Default-Namespace "" (leerer String; auch: leerer Namespace)
+  - keine Attribute
+-->

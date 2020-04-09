@@ -1,0 +1,232 @@
+# Dokumente im DOM
+
+Ein Dokument „hängt“ im Modell _immer_ unter einem Dokument-Knoten `document-node()` – dieser ist
+abstrakt, also nicht praktisch aufrufbar.
+
+Ein tatsächliches Dokument hat als höchstens erreichbaren Knoten den Root. Dieser lässt sich
+erreichen über `root()`.
+
+- Der `document-node()` ist das abstrakte Dokument; er bezeichnet das Dokument als solches, an dem
+  alle Eigenschaften „hängen“, ohne selbst aber eine zugreifbare Eigenschaft zu sein.
+- Ein tatsächliches, instantiiertes Dokument hat `root()` als obersten Knoten. Auf `root()` kann
+  programmatisch zugegriffen werden.
+- Ein tatsächliches Dokument
+  - beginnt immer implizit mit `root()`, auch wenn dieser keine textliche
+    Darstellung in einer XML-Datei hat.
+  - direkt unterhalb von `root()` gibt es 2 Teile:
+    - Prolog
+      - kann enthalten:
+        - processing-instruction()*
+        - comment()*
+      - seine Bestateile können in der Serialisierung zwecks übersichtlichkeit durch 
+        Zeilenumbrüche getrennt werden, es darf aber keine weiterer Text hier stehen – diese
+        Zeilenumbrüche sind im DOM nicht existent, werden also nach einer Verarbeitung nicht
+        ausgegeben
+      - ! Text im Prolog ist kein wohlgeformtes XML und führt auf jeden Fall zu einem Parserfehler
+    - Wurzelelement
+      - es gibt _exakt eines_
+      - ist ein „normales“ Element mit allem Inhalt eines Elementes
+        - ab hier gibt es also Textknoten und Attribute
+  
+  
+Eine _serialisierte_ XML, also eine Datei, die Text enthält, hat als ersten geschriebenen Bestandteil (gemäß Spec) immer die XML-Deklaration
+    `<?xml version="1.0" encoding="UTF-8"?>`
+diese ist aber _nicht Teil des DOM_, also des eigentlichen XML, sondern nur ein _Hinweis in einer
+(Text-)Datei_, daß es sich hier um ein serialisiertes XML-DOM handelt.
+    
+
+===
+# Knoten und ihre Kinder
+
+node()
+ |- namespace()  \               \
+ |- name()       /                >  immer als erste
+ |- attribute()*                 /
+ |- (text() | element() | comment() | processing-instruction())*
+ 
+## Elementknoten
+element()
+ |- namespace()
+ |- local-name()
+ |- attribute()*
+ |- (text() | element() | comment() | processing-instruction())*
+ 
+Es können keine Text-, Element-, Kommentar- oder PI-Knoten vor einem Attributknoten stehen – bzw.
+anders herum: sobald einer dieser Knoten erstellt wurde, kann kein Attributknoten erstellt werden.
+
+## Attributknoten
+attribute()
+ |- namespace()
+ |- local-name()
+ |- text() [= value]
+ 
+## Textknoten
+text()                                          || Hat keine Kinder und keinen Namespace
+
+=====
+# XPath-Selektoren und -Pfade
+## Aufbau XPath
+
+Grundlegender Aufbau: (Schritt“) „/“ (Schritt)
+
+Schrägstrich: trennt die einzelnen Schritte der Angaben eines Pfades voneinander
+
+Ein Pfad kann relativ sein oder absolut.
+
+Ein absoluter Pfad beginnt unterhalb von `root()`:
+`root()` hat kein Kürzel. Fängt der XPath mit „/“ an, so steht er, quasi als String
+der Länge 0 am Anfang des Ausdruckes, vor dem „/“:    
+    |(root(self::node()) treat as document-node())/XML|  <== nicht merken, wird normalerweise 
+                                                             nicht gebraucht
+Ein absoluter Pfad beginnt immer mit /; ein XPath, der mit / beginnt, ist also ein absoluter Pfad.
+
+Ein relativer Pfad beginnt immer auf einem Knoten unterhalb von `root()`; er beginnt also nicht mit einem /, sondern einer anderen Angabe.
+                                                             
+XPath läßt sich schrittweise auswerten, jeder Schritt, durch / getrennt, wird dabei der
+Reihenfolge nach durchlaufen. Mit / am Anfang beginnt man bei `root()` (s.o.); steht kein / am 
+Anfang beginnt man auf dem aktuellen Knoten.
+
+### Schritte
+Es gibt grundsätzlich 2 Arten von Schritten:
+- Bewegung entlang einer Achse des DOM-Graphen
+- Auswertung eines aktuellen Knotens
+
+Arten von Achsen:
+  - child()     - direkte Kinder; wählt ohne explizite Auswahl nicht attribute() oder
+                  namespace-node() aus
+
+Bei der Bewegung entlang der Achsen gibt es, wenn keine Achse explizit angegeben wird, einen
+Standard: die Kind-Achse.
+
+    |/XML|      „Element namens ‚XML‘ unterhalb von root()“
+                (senkrechte Striche: nicht Teil des Pfades, sondern zur optischen Abgrenzung)
+    |XML|       „Element namens ‚XML‘, das ein Kind des aktuellen Knotens ist“
+    |XML/element/@attribute|
+                „Element namens ‚XML‘, das ein Kind des aktuellen Knotens ist, darin dann ein
+                Element namens ‚element‘ und darin ein Attribut namens ‚attribute‘“
+
+## Selektoren
+
+
+=====
+# Namespaces, FQNames und XPath
+
+xmlns:tei     = "http://www.tei-c.org/ns/1.0"
+|---| |prefix|   | namespace URI           |
+
+Stichwörter zu Namespace und local-name: QName FQName [(Fully)Qualified Name]
+QName  := {prefix}:{local-name()}
+FQName := {{ {namespace-uri} }}:{local-name()}
+
+Beispiel tei:TEI:
+-----------------
+QName  : tei:TEI
+FQName : {http://www.tei-c.org/ns/1.0}:TEI
+
+let $example :=
+<TEI xmlns="http://www.tei-c.org/ns/1.0">       || {http://www.tei-c.org/ns/1.0}:TEI
+    <surface xml:id="page001">                  || {http://www.tei-c.org/ns/1.0}:surface ; 
+                                                   {http://w3.org/1995/xml}:id
+        <graphic url=".tiff"/>                  || {http://www.tei-c.org/ns/1.0}:graphic
+                                                   {}:url
+    </surface>
+</TEI>
+
+/TEI                    => ()                   || gesucht: {}:TEI
+/tei:TEI                => ($example)
+/*:TEI                  => ($example)
+//tei:surface           => ($example/tei:surface)
+//tei:surface/@id       => ()                   || gesucht: {}:id
+//tei:surface/@xml:id   => (attribute xml:id { "page001" }
+//tei:graphic/@url      => (attribute {}:url { ".tiff" }
+//tei:graphic/@tei:url  => ()
+
+Elemente erben ihren Namespace von ihrem Elternelement, sofern nicht explizit einer
+  angegeben ist. Attributknoten hingegen erben diese nicht und stehen per Default im leeren
+  Namespace {}
+
+# Textwert eines Knotens
+## Elementknoten
+Bei Elementknoten ist der Textwert die Konkatenierung der Textwerte aller Kindknoten
+
+## Textknoten : volle Stringwert (inkl. aller Whitespaces!)
+## alle anderen: leeren String
+
+## Beispiel von oben:
+String($example//tei:graphic) = ""
+String($example//tei:surface) = »\n\s{8}\n\s{4}«
+
+# Beispiel
+element()
+ |- namespace-uri() = "http://www.tei-c.org/ns/1.0"                 || geerbt
+ |- local-name() = "facsimile"
+ |- text() = "\n    "
+ |- element()
+ |   |- namespace-uri() = "http://www.tei-c.org/ns/1.0"             || geerbt
+ |   |- local-name() = "surface"
+ |   |- attribute()
+ |   |   |- namespace-uri() = "http://w3.org/1995/xml"
+ |   |   |- local-name() = "id"
+ |   |   |- text() = "page0001"
+ |   |- text() = "\n      "
+ |   |- element()
+ |   |   |- namespace-uri() = "http://www.tei-c.org/ns/1.0"         || geerbt
+ |   |   |- local-name() = "graphic"
+ |   |   |- attribute()
+ |   |   |   |- namespace-uri() = ""
+ |   |   |   |- local-name() = "url"
+ |   |   |   |- text() = ".tiff"
+ |   |- text() = "\n    "
+ |- text() = "\n    "
+ |- element()
+ 
+# XSLT
+## Dokumente
+### Eingangsdokument
+- das (XML-)Dokument, auf das das XSLT angewendet wird
+- „source tree“
+- wird eingangs geparst (XML-Parser) und ist danach statisch
+- exakt eines; weitere Knoten(-sequenzen) können in Variablen gespeichert werden
+
+### XSLT
+- ist ebenfalls eine XML, also ein DOM
+- kann über xsl:import und xsl:include erweitert werden - z.B. für „Module“
+
+### Ausgangsdokument
+- „result tree“
+- exakt einer – weitere Dokumente lassen sich über xsl:result-document erstellen
+
+### Dokumentarten
+#### source tree
+- XML  <==
+- ab XSLT 3.0 auch grundsätzlich: JSON zu DOM geparst (genau: map(*))
+- über spezielle Anweisungen: beliebige Dateien – Sonderfälle
+
+### result tree
+- häufig: XML
+- HTML (da nicht zwangsläufig wohlgeformtes XML)
+- JSON
+- Text
+
+## Variablen
+- es können Variablen definiert werden – z.B. Strings, Int, Sequenzen, Knoten
+- Var. sind immutable - sie können nach der Deklaration nicht verändert werden
+
+====
+
+# Namespaces
+
+<meinElement xmlns:tei="http://www.tei-c.org/ns/10">
+  <tei:p>
+    <egal />
+  </tei:p>
+</meinElement>
+
+====
+
+"   – Zeichen für Inch/Zoll. Reserviertes Zeichen in XML: grenzt Attributwert ab
+„“  - dt. Anführungszeichen
+“”  - en. Anführungszeichen
+« Text »  - frz.
+«Text»
+»Text«
