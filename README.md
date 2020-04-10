@@ -4,6 +4,7 @@
 - Einführung in XPath
 - Grundlagen XSLT
 
-CC-By-SA 4.0
-2020— Dario Kampkaspar
+[CC-By-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/)
+
+2020– Dario Kampkaspar
 dario.kampkaspar@tu-darmstadt.de
