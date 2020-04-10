@@ -127,5 +127,6 @@
     </meta>
     <projectTree name="xslt-schulung.xpr">
         <folder path="."/>
+        <folder path="../../../../media/p5/home/dario/git/festschrift-450-jahre-ulb/refactor/"/>
     </projectTree>
 </project>

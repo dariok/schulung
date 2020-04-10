@@ -18,7 +18,7 @@ erreichen über `root()`.
       - kann enthalten:
         - processing-instruction()*
         - comment()*
-      - seine Bestateile können in der Serialisierung zwecks übersichtlichkeit durch 
+      - seine Bestandteile können in der Serialisierung zwecks übersichtlichkeit durch 
         Zeilenumbrüche getrennt werden, es darf aber keine weiterer Text hier stehen – diese
         Zeilenumbrüche sind im DOM nicht existent, werden also nach einer Verarbeitung nicht
         ausgegeben
@@ -29,7 +29,8 @@ erreichen über `root()`.
         - ab hier gibt es also Textknoten und Attribute
   
   
-Eine _serialisierte_ XML, also eine Datei, die Text enthält, hat als ersten geschriebenen Bestandteil (gemäß Spec) immer die XML-Deklaration
+Eine _serialisierte_ XML, also eine Datei, die Text enthält, hat als ersten geschriebenen Bestandteil (gemäß Spec) immer
+die XML-Deklaration
     `<?xml version="1.0" encoding="UTF-8"?>`
 diese ist aber _nicht Teil des DOM_, also des eigentlichen XML, sondern nur ein _Hinweis in einer
 (Text-)Datei_, daß es sich hier um ein serialisiertes XML-DOM handelt.
@@ -67,7 +68,7 @@ text()                                          || Hat keine Kinder und keinen N
 # XPath-Selektoren und -Pfade
 ## Aufbau XPath
 
-Grundlegender Aufbau: (Schritt“) „/“ (Schritt)
+Grundlegender Aufbau: (Schritt) „/“ (Schritt)
 
 Schrägstrich: trennt die einzelnen Schritte der Angaben eines Pfades voneinander
 
@@ -78,26 +79,96 @@ Ein absoluter Pfad beginnt unterhalb von `root()`:
 der Länge 0 am Anfang des Ausdruckes, vor dem „/“:    
     |(root(self::node()) treat as document-node())/XML|  <== nicht merken, wird normalerweise 
                                                              nicht gebraucht
+                                                             
 Ein absoluter Pfad beginnt immer mit /; ein XPath, der mit / beginnt, ist also ein absoluter Pfad.
 
-Ein relativer Pfad beginnt immer auf einem Knoten unterhalb von `root()`; er beginnt also nicht mit einem /, sondern einer anderen Angabe.
+Ein relativer Pfad beginnt immer auf einem Knoten unterhalb von `root()`; er beginnt also nicht mit einem /, sondern
+einer anderen Angabe.
                                                              
 XPath läßt sich schrittweise auswerten, jeder Schritt, durch / getrennt, wird dabei der
 Reihenfolge nach durchlaufen. Mit / am Anfang beginnt man bei `root()` (s.o.); steht kein / am 
 Anfang beginnt man auf dem aktuellen Knoten.
+Die Angabe // ist identisch mit /descendant::*/
+  |XML//kind|   alle `kind` unterhalb von XML (auf belibiger Ebene darunter)
+  |//kind|      alle `kind` unterhalb von root
+  |//*|         alle Elemente unterhalb von root (also auch das Element XML)
 
 ### Schritte
 Es gibt grundsätzlich 2 Arten von Schritten:
 - Bewegung entlang einer Achse des DOM-Graphen
 - Auswertung eines aktuellen Knotens
 
-Arten von Achsen:
-  - child()     - direkte Kinder; wählt ohne explizite Auswahl nicht attribute() oder
-                  namespace-node() aus
+Die Bewegung entlang einer Achse ist ein Schritt, die Auswertung eines Knotens ebenfalls einer. Ein kompletter XPath 
+ergibt sich aus der Kombination solcher Schritte mittels / (s. o.).
+Bei der Bewegung im DOM muß die Achse angegeben werden. Als Default dient hierbei die Kind-Achse (s. u.); sie ist also 
+implizit gemeint, wenn keine Achse explizit genannt ist.
 
-Bei der Bewegung entlang der Achsen gibt es, wenn keine Achse explizit angegeben wird, einen
-Standard: die Kind-Achse.
+### Arten von Achsen:
+1. direkte Achsen entlang des DOM
+  - self        - der aktuell ausgewählte Knoten, „auf dem man gerade steht“
+  - child       - direkte Kindknoten
+                - Standard-Achse
+  - descendant  - Wählt alle Kinder und Kindeskinder etc. aus
+                - wählt standardmäßig _keine_ attribute(), namespace-uri() oder local-name() aus
+  - parent      - wählt den Elternknoten des aktuellen Knotens aus
+  - ancestor    - Elternelement und dessen Elternelement etc. bis hin zu root()
+                – in umgekehrter Dokumentreihenfolge (spricht, das letzte ist root())
+  
+  - ancestor-or-self
+  - descendant-or-self
 
+2. Achsen „innerhalb der Familie“ (sibling-Achsen)
+  - preceding-sibling   - wählt alle „Geschwister“ aus, die in der Dokumentreihenfolge vor dem aktuellen Knoten stehen
+                        - beinhaltet _nicht_ attribute() oder namespace() des Elternknotens
+                        - umgekehrte Dokumentreihenfolge
+  - following-sibling   - wählt alle „Geschiister“ aus, die in der Dokumentreihenfolge nach dem aktuellen Knoten stehen
+
+3. „übergreifende Achsen“
+  - preceding           - alle Knoten, die im DOM direkt vorher kommen (auch hier wieder: ohne Spezialknoten)
+                        - umgekehrte Dokumentreihenfolge
+  - following           - alle Knoten, die im DOM nachher kommen (auch hier: ohne Spezialknoten)
+                        - _nicht_ die Kinder, das diese „darunter“, nicht „danach” sind
+
+### Selektoren
+Mit einem „Selektor“ werden bestimmte Knoten ausgewählt. Sie sind Teil einer Bewegung entlang des DOM, aber nicht der 
+komplette Schritt. Bei der Auswahl eines Knotens aus dem DOM folgt der „Selektor“ einer Achsenangabe. Abgetrennt 
+voneinander werden diese beiden Teile, Achse und Selektor, durch einen doppelten Doppelpunkt „::“ – die Angabe hat also 
+die Form `achse::selektor`.
+Zunächst ist der Selektor die Angabe eines Knotentypen, der später spezifiziert werden kann.
+
+Knotentypen:
+  - node()                    - wählt alle Knoten aus, außer Spezialknoten
+  - element()                 - wählt Knoten aus, die ein Element sind
+                              - Standard
+  - attribute()               - wählt Attributknoten ausgegeben
+  - text()                    - wählt Textknoten aus
+  - comment()                 - Kommentare
+  - processing-instruction()  - alle PI
+  - namespace()               - alle Namespace-Knoten
+
+Es gibt 2 Arten, diese Auswahl zu spezifizieren:
+1. Name – für die Knoten, die einen Namen haben (Elemente, Attribute)
+        - Name ist hier der QName, also namespace-uri() oder prefix() + local-name()
+2. Eigenschaften
+        - werden hinter der Auswahl (aus Achse + QName) in eckigen Klammern angegeben
+        - können Funktionen enthalten, die zu einem boolschen Wert ausgewertet werden können
+        - können einen XPath-Ausdruck enthalten
+
+### Beispiele:
+  - descendant::element()*[child::@xml:id]
+  - descendant::*[@xml:id]  - entlang der Nachkommen-Achse (descendant) wähle
+                            - Elemente (leerer Knotentyp, daher Default element()
+                            - und zwar alle (*)
+                            - mit der Eigenschaft ([]), daß sie
+                              - ein Attribut namens id im namespace xml haben (@xml:id)
+  - child::tei:p[position() = 1]
+  - tei:p[1]                - wähle das Kind aus
+                            - im Namespace mit dem Prefix „tei“
+                            - das den local-name() „p“ hat
+                            - und das erste in der Reihenfolge ist
+
+    
+    
     |/XML|      „Element namens ‚XML‘ unterhalb von root()“
                 (senkrechte Striche: nicht Teil des Pfades, sondern zur optischen Abgrenzung)
     |XML|       „Element namens ‚XML‘, das ein Kind des aktuellen Knotens ist“
@@ -105,9 +176,7 @@ Standard: die Kind-Achse.
                 „Element namens ‚XML‘, das ein Kind des aktuellen Knotens ist, darin dann ein
                 Element namens ‚element‘ und darin ein Attribut namens ‚attribute‘“
 
-## Selektoren
-
-
+    
 =====
 # Namespaces, FQNames und XPath
 
@@ -172,13 +241,18 @@ element()
  |   |- element()
  |   |   |- namespace-uri() = "http://www.tei-c.org/ns/1.0"         || geerbt
  |   |   |- local-name() = "graphic"
- |   |   |- attribute()
+ |   |   |- attribute()                                             <== Ausgangspunkt für Beispiel
  |   |   |   |- namespace-uri() = ""
  |   |   |   |- local-name() = "url"
  |   |   |   |- text() = ".tiff"
  |   |- text() = "\n    "
  |- text() = "\n    "
  |- element()
+
+ Beispiel: wir stehen auf dem Attribut „url“ des Elementes „graphic“; wir wollen zum Attribut „id“ von „surface“:
+    ancestor::tei:surface/child::@id       oder kurz:   ancestor::tei:surface/@id
+    |Achse-|  |-Selektor|                                         |   |local-name() \
+                                                                  |namespace-prefix /  Qualified Name
  
 # XSLT
 ## Dokumente

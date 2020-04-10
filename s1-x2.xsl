@@ -9,11 +9,6 @@
 <xsl:stylesheet
   xmlns:xsl="http://www.w3.org/1999/XSL/Transform"
   version="3.0">
-  <xsl:template match="processing-instruction()">
-    <xsl:copy>
-      MEHR
-    </xsl:copy>
-  </xsl:template>
   <!-- Dieses Template matcht auf alle Knoten, inkl. Attribute
   -->
   <xsl:template match="@* | node()">
