@@ -304,3 +304,28 @@ element()
 « Text »  - frz.
 «Text»
 »Text«
+
+====
+
+# XSLT-Befehle (1)
+
+## xsl:template
+- enthält Anweisungen, wie ein Knoten verarbeitet werden soll. Ein leeres Template bedeutet also: nichts mit dem Knoten 
+  machen: der Knoten wird nicht ausgegeben, die Verarbeitung in diesem Zweig endet (es werden also auch nicht die 
+  Kindknoten bearbeitet).
+  Beispiel für ein leeres Template: <xsl:template match="tei:p" />
+- @match gibt an, auf welche Arten von Knoten das Template zutrifft. Ist zu lesen wie eine Art Selektor (hier ist 
+  sozusagen die self-Achse implizit). Wenn im Verarbeitungskontext ein Knoten tei:p vorliegt, träfe ein Template mit 
+  @match="tei:p" zu
+- @name gibt dem Template einen Namen. Ein solches *named template* kann an jeder Stelle, die einen Knoten erzeugen 
+  kann, aufgerufen werden. Hierbei ist es möglich, Parameter zu übergeben. Ein aufgerufenes named template erbt nicht 
+  grundsätzlich den Kontext, der beim Aufruf galt.
+
+## xsl:apply-templates
+- ist das wichtige Gegenstück zu xsl:template. Diese Anweisung
+  - baut einen neuen Kontext auf und
+  - wertet diesen aus
+  - nach Ablauf der Auswertung dieses neuen Kontextes wird mit dem aktuellen fortgefahren
+- @select gibt an, aus welchen Knoten der neue Kontext besteht. Dieses Attribut wird als vollständiger XPath 
+  ausgewertet (d.h. die Default-Achse ist child::), es können aber alle Knoten des Dokumentes adressiert werden (ggf. 
+  als absoluter Pfad). Es gibt eine Default, falls @select fehlt: „child::* | child::text()“
